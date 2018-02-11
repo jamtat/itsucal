@@ -78,6 +78,15 @@ class SevenSeasScraper : AbstractScraper<MangaSeries>() {
             return null
         }
 
+        val originalTitle: String? = document.selectFirst("#originaltitle")
+            ?.text()
+            ?.trim()
+
+        val otherNames: List<String> = when(originalTitle) {
+            null -> ArrayList<String>()
+            else -> listOf(originalTitle)
+        }
+
         val items: List<Manga> = document.select(".series-volume")
             .parallelStream()
             .map(fun(element): Manga? {
@@ -120,7 +129,8 @@ class SevenSeasScraper : AbstractScraper<MangaSeries>() {
             name = seriesName,
             publisher = name,
             items = items,
-            publisherUrl = seriesUrl
+            publisherUrl = seriesUrl,
+            otherNames = otherNames
         )
     }
 
