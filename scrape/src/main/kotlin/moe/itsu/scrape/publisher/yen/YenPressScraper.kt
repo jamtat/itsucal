@@ -5,14 +5,14 @@ import moe.itsu.common.model.ISBN13
 import moe.itsu.common.model.Manga
 import moe.itsu.common.model.MangaFormat
 import moe.itsu.common.model.MangaSeries
-import moe.itsu.scrape.api.Scraper
+import moe.itsu.scrape.api.AbstractScraper
 import moe.itsu.scrape.api.ScraperException
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
 import java.time.LocalDate
 import java.util.stream.Collectors
 
-class YenPressScraper : Scraper<MangaSeries>() {
+class YenPressScraper : AbstractScraper<MangaSeries>() {
 
     private val SERIES_LIST_URL = "http://yenpress.com/books/"
     private val TITLE_BASE_URL = "http://b2c.hachettebookgroup.com"
@@ -112,6 +112,11 @@ class YenPressScraper : Scraper<MangaSeries>() {
             }).collect(Collectors.toList())
             .filterNotNull()
 
+        logger.info("Fetched series \"$seriesName\" from $url, found ${items.size} items")
+
+        if (items.isEmpty())
+            return null
+
         return MangaSeries(
             name = seriesName,
             publisher = name,
@@ -122,7 +127,7 @@ class YenPressScraper : Scraper<MangaSeries>() {
 
     private fun fetchDetailForItem(itemUrl: String): Manga? {
         logger.info("Fetching item from $itemUrl")
-        val response = get("$itemUrl")
+        val response = get(itemUrl)
 
         if(response.statusCode != 200) {
             logger.warning("Could not fetch series from $itemUrl")
@@ -146,7 +151,7 @@ class YenPressScraper : Scraper<MangaSeries>() {
             return null
         }
 
-        var date: LocalDate? = null
+        val date: LocalDate?
 
         try {
             val dateMatch = Regex("""\d{2}/\d{2}/\d{4}""")
