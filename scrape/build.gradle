@@ -14,7 +14,7 @@ mainClassName = 'moe.itsu.scrape.application.ScrapeApplicationKt'
 
 dependencies {
     compile project(':common')
-    compile "com.github.kittinunf.fuel:fuel:$fuel_version"
+    compile "khttp:khttp:$khttp_version"
     compile "org.jsoup:jsoup:$jsoup_version"
 }
 

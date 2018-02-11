@@ -23,7 +23,7 @@ allprojects {
         jackson_module_kotlin_version = '2.9.4.1'
         jackson_version = '2.9.4'
         jsoup_version = '1.11.2'
-        fuel_version = '1.12.1'
+        khttp_version = '0.1.0'
     }
 
     repositories {

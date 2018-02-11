@@ -1,12 +1,12 @@
 package moe.itsu.scrape.publisher.sevenseas
 
-import com.github.kittinunf.fuel.Fuel
-import com.github.kittinunf.result.Result
+import khttp.get
 import moe.itsu.common.model.ISBN13
 import moe.itsu.common.model.Manga
 import moe.itsu.common.model.MangaFormat
 import moe.itsu.common.model.MangaSeries
 import moe.itsu.scrape.api.Scraper
+import moe.itsu.scrape.api.ScraperException
 import org.jsoup.Jsoup
 import java.time.LocalDate
 
@@ -32,13 +32,10 @@ class SevenSeasScraper : Scraper<MangaSeries>() {
         val list = ArrayList<MangaSeries>()
 
         logger.info("Fetching all series from $SERIES_LIST_URL")
-        val (_, _, result) = Fuel.get(SERIES_LIST_URL).responseString()
+        val response = get(SERIES_LIST_URL)
 
-        when (result) {
-            is Result.Failure -> {
-                logger.warning("Could not fetch series from $SERIES_LIST_URL")
-            }
-            is Result.Success -> Jsoup.parse(result.get()).run {
+        when (response.statusCode) {
+            200 -> Jsoup.parse(response.text).run {
                 select("tr#volumes").forEach { element ->
                     val seriesName: String = element.selectFirst("strong").text()
                     val publisherUrl: String = element.selectFirst("td > a").attr("href")
@@ -53,6 +50,9 @@ class SevenSeasScraper : Scraper<MangaSeries>() {
                         list.add(series)
                 }
             }
+            else -> {
+                throw ScraperException("Could not fetch series from $SERIES_LIST_URL")
+            }
         }
 
         return list
@@ -60,48 +60,48 @@ class SevenSeasScraper : Scraper<MangaSeries>() {
 
     private fun fetchItemsForSeries(series: MangaSeries): List<Manga>? {
         logger.info("Fetching series \"${series.name}\" from ${series.publisherUrl}")
-        val (_, _, result) = Fuel.get(series.publisherUrl).responseString()
+        val response = get(series.publisherUrl)
 
-        if(result is Result.Failure) {
+        if(response.statusCode != 200) {
             logger.warning("Could not fetch series \"${series.name}\" from ${series.publisherUrl}")
             return null
         }
 
-        val document = Jsoup.parse(result.get())
+        val document = Jsoup.parse(response.text)
 
         val items: List<Manga> = document.select(".series-volume")
             .mapNotNull(fun(element): Manga? {
-            val txt = element.text()
+                val txt = element.text()
 
-            try {
-                val dateMatch = Regex("""\d{4}/\d{2}/\d{2}""").find(txt)?.value
+                try {
+                    val dateMatch = Regex("""\d{4}/\d{2}/\d{2}""").find(txt)?.value
 
-                if(dateMatch != null) {
-                    val (year, month, day) = dateMatch.split("/").map { it.toInt() }
-                    val isbn = txt.split("ISBN:").last().trim()
-                    val authors = document.select("#series-meta a[href*='/creator/']").map { it.text().trim() }
+                    if(dateMatch != null) {
+                        val (year, month, day) = dateMatch.split("/").map { it.toInt() }
+                        val isbn = txt.split("ISBN:").last().trim()
+                        val authors = document.select("#series-meta a[href*='/creator/']").map { it.text().trim() }
 
-                    return Manga(
-                        name = element.selectFirst("h3").text().trim(),
-                        releaseDate = LocalDate.of(year,month,day),
-                        publisherUrl = element.selectFirst("a").attr("href"),
-                        isbn13 = ISBN13(isbn),
-                        format = MangaFormat.PRINT,
-                        authors = authors
-                    )
-                } else {
+                        return Manga(
+                            name = element.selectFirst("h3").text().trim(),
+                            releaseDate = LocalDate.of(year,month,day),
+                            publisherUrl = element.selectFirst("a").attr("href"),
+                            isbn13 = ISBN13(isbn),
+                            format = MangaFormat.PRINT,
+                            authors = authors
+                        )
+                    } else {
+                        logger.warning("Could not parse date from ${series.publisherUrl} ($txt)")
+                        return null
+                    }
+
+                } catch (e: NumberFormatException) {
                     logger.warning("Could not parse date from ${series.publisherUrl} ($txt)")
                     return null
+                } catch (e: NoSuchElementException) {
+                    logger.warning("Could not parse ISBN from ${series.publisherUrl} ($txt)")
+                    return null
                 }
-
-            } catch (e: NumberFormatException) {
-                logger.warning("Could not parse date from ${series.publisherUrl} ($txt)")
-                return null
-            } catch (e: NoSuchElementException) {
-                logger.warning("Could not parse ISBN from ${series.publisherUrl} ($txt)")
-                return null
-            }
-        })
+            })
 
         logger.info("Fetched series \"${series.name}\" from ${series.publisherUrl}, found ${items.size} items")
 

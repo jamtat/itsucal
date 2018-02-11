@@ -9,3 +9,6 @@
 .gradle
 build/
 out/
+
+# Misc
+*.log

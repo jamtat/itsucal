@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import moe.itsu.common.model.MangaSeries
 import moe.itsu.scrape.publisher.sevenseas.SevenSeasScraper
+import moe.itsu.scrape.publisher.yen.YenPressScraper
 
 val om = ObjectMapper()
     .registerKotlinModule()
@@ -16,4 +17,5 @@ fun printResult(series: MangaSeries) {
 
 fun main(args: Array<String>) {
     SevenSeasScraper().run { series -> printResult(series) }
+    YenPressScraper().run { series -> printResult(series) }
 }
