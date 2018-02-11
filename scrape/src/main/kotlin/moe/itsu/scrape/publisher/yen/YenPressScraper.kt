@@ -25,7 +25,9 @@ class YenPressScraper : AbstractScraper<MangaSeries>() {
         fetchBookSeries(consumer)
     }
 
-    private fun fetchBookSeries(consumer: (MangaSeries) -> Unit) {
+    override fun updateEntity(entity: MangaSeries): MangaSeries? = fetchBookSeries(entity.publisherUrl)
+
+    private fun fetchBookSeries(consumer: (MangaSeries) -> Unit): List<MangaSeries> {
         // We don't compose the MangaSeries here, because their
         // series page spells some titles wrong.
         // In particular they misspell Today's Cerberus which
@@ -34,13 +36,15 @@ class YenPressScraper : AbstractScraper<MangaSeries>() {
 
         val seriesUrls: List<String> = fetchBookSeriesURLList()
 
-        seriesUrls
+        return seriesUrls
             .parallelStream()
-            .forEach {
+            .map {
                 val series = fetchBookSeries(it)
                 if (series != null)
                     consumer(series)
-            }
+                series
+            }.collect(Collectors.toList())
+            .filterNotNull()
     }
 
     private fun fetchBookSeriesURLList(): List<String> {
@@ -76,12 +80,12 @@ class YenPressScraper : AbstractScraper<MangaSeries>() {
         return list
     }
 
-    private fun fetchBookSeries(url: String): MangaSeries? {
-        logger.info("Fetching series from $url")
-        val response = get(url)
+    private fun fetchBookSeries(seriesUrl: String): MangaSeries? {
+        logger.info("Fetching series from $seriesUrl")
+        val response = get(seriesUrl)
 
         if(response.statusCode != 200) {
-            logger.warning("Could not fetch series from $url")
+            logger.warning("Could not fetch series from $seriesUrl")
             return null
         }
 
@@ -90,7 +94,7 @@ class YenPressScraper : AbstractScraper<MangaSeries>() {
         val seriesNameElement: Element? = document.selectFirst("#search-results header")
 
         if (seriesNameElement == null) {
-            logger.warning("Could not get series name for $url, may be a one off and not a series")
+            logger.warning("Could not get series name for $seriesUrl, may be a one off and not a series")
             return null
         }
 
@@ -104,7 +108,7 @@ class YenPressScraper : AbstractScraper<MangaSeries>() {
                     ?.attr("href")
 
                 if(href == null) {
-                    logger.warning("Could not find non ebook url for ${element.selectFirst("h1").text()} on $url")
+                    logger.warning("Could not find non ebook url for ${element.selectFirst("h1").text()} on $seriesUrl")
                     return null
                 }
 
@@ -112,7 +116,7 @@ class YenPressScraper : AbstractScraper<MangaSeries>() {
             }).collect(Collectors.toList())
             .filterNotNull()
 
-        logger.info("Fetched series \"$seriesName\" from $url, found ${items.size} items")
+        logger.info("Fetched series \"$seriesName\" from $seriesUrl, found ${items.size} items")
 
         if (items.isEmpty())
             return null
@@ -121,7 +125,7 @@ class YenPressScraper : AbstractScraper<MangaSeries>() {
             name = seriesName,
             publisher = name,
             items = items,
-            publisherUrl = url
+            publisherUrl = seriesUrl
         )
     }
 

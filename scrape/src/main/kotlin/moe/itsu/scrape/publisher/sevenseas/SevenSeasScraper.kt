@@ -9,6 +9,7 @@ import moe.itsu.scrape.api.AbstractScraper
 import moe.itsu.scrape.api.ScraperException
 import org.jsoup.Jsoup
 import java.time.LocalDate
+import java.util.stream.Collectors
 
 class SevenSeasScraper : AbstractScraper<MangaSeries>() {
 
@@ -19,58 +20,67 @@ class SevenSeasScraper : AbstractScraper<MangaSeries>() {
     override fun run(consumer: (MangaSeries) -> Unit) {
         super.run(consumer)
 
-        fetchSeriesList()
-            .parallelStream()
-            .forEach { series ->
-                val seriesItems = fetchItemsForSeries(series)
-                if (seriesItems != null)
-                    consumer(series.copy(items = seriesItems))
-            }
+        fetchAllSeries(consumer)
     }
 
-    private fun fetchSeriesList(): List<MangaSeries> {
-        val list = ArrayList<MangaSeries>()
+    override fun updateEntity(entity: MangaSeries): MangaSeries? = fetchSeries(entity.publisherUrl)
+
+    private fun fetchAllSeries(consumer: (MangaSeries) -> Unit): List<MangaSeries> {
+        val urlList = ArrayList<String>()
 
         logger.info("Fetching all series from $SERIES_LIST_URL")
         val response = get(SERIES_LIST_URL)
 
-        when (response.statusCode) {
-            200 -> Jsoup.parse(response.text).run {
-                select("tr#volumes").forEach { element ->
-                    val seriesName: String = element.selectFirst("strong").text()
-                    val publisherUrl: String = element.selectFirst("td > a").attr("href")
+        if(response.statusCode != 200) {
+            throw ScraperException("Could not fetch series from $SERIES_LIST_URL")
+        }
 
-                    val series = MangaSeries(
-                        name = seriesName,
-                        publisher = name,
-                        publisherUrl = publisherUrl
-                    )
+        Jsoup.parse(response.text).run {
+            select("tr#volumes").forEach { element ->
+                val seriesName: String = element.selectFirst("strong").text()
+                val publisherUrl: String = element.selectFirst("td > a").attr("href")
 
-                    if (!seriesName.toLowerCase().contains("light novel"))
-                        list.add(series)
-                }
-            }
-            else -> {
-                throw ScraperException("Could not fetch series from $SERIES_LIST_URL")
+                if (!seriesName.toLowerCase().contains("light novel"))
+                    urlList.add(publisherUrl)
             }
         }
 
-        return list
+        return urlList
+            .parallelStream()
+            .map {
+                val series = fetchSeries(it)
+                if(series != null)
+                    consumer(series)
+                series
+            }.collect(Collectors.toList())
+            .filterNotNull()
     }
 
-    private fun fetchItemsForSeries(series: MangaSeries): List<Manga>? {
-        logger.info("Fetching series \"${series.name}\" from ${series.publisherUrl}")
-        val response = get(series.publisherUrl)
+    private fun fetchSeries(seriesUrl: String): MangaSeries? {
+        logger.info("Fetching series from $seriesUrl")
+        val response = get(seriesUrl)
 
         if(response.statusCode != 200) {
-            logger.warning("Could not fetch series \"${series.name}\" from ${series.publisherUrl}")
+            logger.warning("Could not fetch series from $seriesUrl")
             return null
         }
 
         val document = Jsoup.parse(response.text)
 
+        val seriesName: String? = document.selectFirst("h2.topper")
+            ?.text()
+            ?.split(":")
+            ?.last()
+            ?.trim()
+
+        if(seriesName == null) {
+            logger.warning("Could not find series name from $seriesUrl")
+            return null
+        }
+
         val items: List<Manga> = document.select(".series-volume")
-            .mapNotNull(fun(element): Manga? {
+            .parallelStream()
+            .map(fun(element): Manga? {
                 val txt = element.text()
 
                 try {
@@ -90,23 +100,28 @@ class SevenSeasScraper : AbstractScraper<MangaSeries>() {
                             authors = authors
                         )
                     } else {
-                        logger.warning("Could not parse date from ${series.publisherUrl} ($txt)")
+                        logger.warning("Could not parse date from $seriesUrl ($txt)")
                         return null
                     }
 
                 } catch (e: NumberFormatException) {
-                    logger.warning("Could not parse date from ${series.publisherUrl} ($txt)")
+                    logger.warning("Could not parse date from $seriesUrl ($txt)")
                     return null
                 } catch (e: NoSuchElementException) {
-                    logger.warning("Could not parse ISBN from ${series.publisherUrl} ($txt)")
+                    logger.warning("Could not parse ISBN from $seriesUrl ($txt)")
                     return null
                 }
-            })
+            }).collect(Collectors.toList())
+            .filterNotNull()
 
-        logger.info("Fetched series \"${series.name}\" from ${series.publisherUrl}, found ${items.size} items")
+        logger.info("Fetched series \"$seriesName\" from $seriesUrl, found ${items.size} items")
 
-        return items
-
+        return MangaSeries(
+            name = seriesName,
+            publisher = name,
+            items = items,
+            publisherUrl = seriesUrl
+        )
     }
 
     override fun stop() {

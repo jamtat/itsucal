@@ -17,7 +17,7 @@ abstract class AbstractScraper<T> : Scraper<T> {
         logger.info("Stopped scraper: " + this.javaClass.name)
     }
 
-    override fun updateEntity(entity: T): T {
+    override fun updateEntity(entity: T): T? {
         TODO("not implemented")
     }
 }

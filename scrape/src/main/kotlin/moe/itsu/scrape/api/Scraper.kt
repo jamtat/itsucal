@@ -6,5 +6,5 @@ interface Scraper<T> {
 
     fun stop()
 
-    fun updateEntity(entity: T): T
+    fun updateEntity(entity: T): T?
 }
