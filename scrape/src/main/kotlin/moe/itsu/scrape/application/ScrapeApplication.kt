@@ -13,7 +13,7 @@ val om = ObjectMapper()
     .enable(SerializationFeature.INDENT_OUTPUT)
 
 fun printResult(series: MangaSeries) {
-
+//    println(om.writeValueAsString(series))
 }
 
 fun main(args: Array<String>) {

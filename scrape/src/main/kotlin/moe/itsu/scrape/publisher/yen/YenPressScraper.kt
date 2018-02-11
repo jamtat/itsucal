@@ -142,6 +142,14 @@ class YenPressScraper : AbstractScraper<MangaSeries>() {
             ?.selectFirst(".detail-value")
             ?.text()
 
+        val authors: List<String> = document.selectFirst("h3#book-author")
+            ?.text()
+            ?.trim()
+            ?.replace("^By ".toRegex(), "")
+            ?.replace("\\(.*\\)\$".toRegex(), "")
+            ?.split(",")
+            ?.map { it.trim() } ?: ArrayList()
+
         val blurbElement: Element? = document.selectFirst("#book-description-full")
 
         val blurb = blurbElement?.text()?.trim()
@@ -177,7 +185,8 @@ class YenPressScraper : AbstractScraper<MangaSeries>() {
             isbn13 = ISBN13(isbn),
             format = MangaFormat.PRINT,
             publisherUrl = itemUrl,
-            blurb = blurb
+            blurb = blurb,
+            authors = authors
         )
     }
 
