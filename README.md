@@ -1,6 +1,6 @@
-# Mangacal
+# Itsucal
 
-A calendar for manga release dates across vendors and publishers.
+A calendar for product release dates across vendors and publishers.
 
 
 What could possibly go wrong?

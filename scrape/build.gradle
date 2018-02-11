@@ -1,0 +1,26 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+
+apply plugin: 'kotlin'
+apply plugin: 'application'
+
+mainClassName = 'moe.itsu.scrape.application.ScrapeApplicationKt'
+
+dependencies {
+    compile project(':common')
+    compile "com.github.kittinunf.fuel:fuel:$fuel_version"
+    compile "org.jsoup:jsoup:$jsoup_version"
+}
+
+compileKotlin {
+    kotlinOptions.jvmTarget = "1.8"
+}
+compileTestKotlin {
+    kotlinOptions.jvmTarget = "1.8"
+}

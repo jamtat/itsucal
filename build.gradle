@@ -1,0 +1,42 @@
+buildscript {
+    ext {
+        kotlin_version = '1.2.21'
+    }
+
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+
+apply plugin: 'kotlin'
+
+defaultTasks 'run'
+
+allprojects {
+    project.ext {
+        kotlin_version = '1.2.21'
+        dropwizard_version = '1.2.2'
+        jackson_module_kotlin_version = '2.9.4.1'
+        jackson_version = '2.9.4'
+        jsoup_version = '1.11.2'
+        fuel_version = '1.12.1'
+    }
+
+    repositories {
+        mavenCentral()
+        jcenter()
+    }
+}
+
+subprojects {
+    version '0.0.1'
+}
+
+description 'A calendar for release dates across vendors'
+
+
+
