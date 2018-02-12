@@ -12,8 +12,13 @@ val om = ObjectMapper()
     .registerKotlinModule()
     .enable(SerializationFeature.INDENT_OUTPUT)
 
-fun printResult(series: MangaSeries) {
-//    println(om.writeValueAsString(series))
+val db = ItemHashDB<MangaSeries>()
+
+fun storeResult(series: MangaSeries) {
+    db.addReplace(series)
+    println()
+    println(db.size)
+    println()
 }
 
 fun main(args: Array<String>) {
@@ -22,5 +27,5 @@ fun main(args: Array<String>) {
     scrapers.add(SevenSeasScraper())
     scrapers.add(YenPressScraper())
 
-    scrapers.parallelStream().forEach { it.run { series -> printResult(series) } }
+    scrapers.parallelStream().forEach { it.run { series -> storeResult(series) } }
 }

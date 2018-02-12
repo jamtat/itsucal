@@ -6,4 +6,6 @@ data class MangaSeries(
     val items: List<Manga> = ArrayList(),
     val otherNames: List<String> = ArrayList(),
     val publisherUrl: String
-)
+) {
+    override fun hashCode(): Int = (name + publisher).hashCode()
+}
