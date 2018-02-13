@@ -1,10 +1,10 @@
 package moe.itsu.scrape.publisher.yen
 
 import khttp.get
-import moe.itsu.common.model.ISBN13
-import moe.itsu.common.model.Manga
-import moe.itsu.common.model.MangaFormat
-import moe.itsu.common.model.MangaSeries
+import moe.itsu.common.model.entity.manga.ISBN13
+import moe.itsu.common.model.entity.manga.Manga
+import moe.itsu.common.model.entity.manga.MangaFormat
+import moe.itsu.common.model.entity.manga.MangaSeries
 import moe.itsu.scrape.api.AbstractScraper
 import moe.itsu.scrape.api.ScraperException
 import org.jsoup.Jsoup

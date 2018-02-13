@@ -1,7 +1,7 @@
 package moe.itsu.scrape.application
 
 class ItemHashDB<T> {
-    private val store: MutableSet<T> = HashSet<T>()
+    private var store: MutableSet<T> = HashSet()
 
     val size: Int
         get() = store.size
@@ -16,6 +16,10 @@ class ItemHashDB<T> {
             return true
         }
         return false
+    }
+
+    fun clear() {
+        store = HashSet()
     }
 
     fun replace(item: T): Boolean {

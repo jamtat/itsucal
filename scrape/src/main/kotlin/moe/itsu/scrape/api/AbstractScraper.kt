@@ -5,7 +5,6 @@ import java.util.logging.Logger
 abstract class AbstractScraper<T> : Scraper<T> {
     var running: Boolean = false
     var logger: Logger = Logger.getLogger(this.javaClass.name)
-    abstract val name: String
 
     override fun run(consumer: (T) -> Unit) {
         this.running = true

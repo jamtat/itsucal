@@ -1,31 +1,17 @@
 package moe.itsu.scrape.application
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.SerializationFeature
-import com.fasterxml.jackson.module.kotlin.registerKotlinModule
-import moe.itsu.common.model.MangaSeries
+import moe.itsu.common.model.entity.manga.MangaSeries
 import moe.itsu.scrape.api.Scraper
 import moe.itsu.scrape.publisher.sevenseas.SevenSeasScraper
 import moe.itsu.scrape.publisher.yen.YenPressScraper
+import kotlin.reflect.KClass
 
-val om = ObjectMapper()
-    .registerKotlinModule()
-    .enable(SerializationFeature.INDENT_OUTPUT)
-
-val db = ItemHashDB<MangaSeries>()
-
-fun storeResult(series: MangaSeries) {
-    db.addReplace(series)
-    println()
-    println(db.size)
-    println()
-}
 
 fun main(args: Array<String>) {
-    val scrapers: ArrayList<Scraper<MangaSeries>> = ArrayList()
+    val scrapers: ArrayList<KClass<out Scraper<MangaSeries>>> = ArrayList()
 
-    scrapers.add(SevenSeasScraper())
-    scrapers.add(YenPressScraper())
+    scrapers.add(SevenSeasScraper::class)
+    scrapers.add(YenPressScraper::class)
 
-    scrapers.parallelStream().forEach { it.run { series -> storeResult(series) } }
+    scrapers.forEach {ScraperManager(it)}
 }

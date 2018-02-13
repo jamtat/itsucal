@@ -12,7 +12,10 @@ buildscript {
 apply plugin: 'kotlin'
 
 dependencies {
+    compile project(':common')
+    compile project(':scrape')
     compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
+    compile "io.dropwizard:dropwizard-core:$dropwizard_version"
 }
 
 compileKotlin {

@@ -1,5 +1,6 @@
-package moe.itsu.common.model
+package moe.itsu.common.model.entity.manga
 
+import moe.itsu.common.model.entity.manga.ISBN13
 import org.junit.Assert.*
 import org.junit.Test
 

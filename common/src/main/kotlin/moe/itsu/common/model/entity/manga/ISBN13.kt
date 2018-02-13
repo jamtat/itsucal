@@ -1,4 +1,4 @@
-package moe.itsu.common.model
+package moe.itsu.common.model.entity.manga
 
 import com.fasterxml.jackson.core.JsonGenerator
 import com.fasterxml.jackson.databind.JsonSerializable
