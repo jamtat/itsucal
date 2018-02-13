@@ -8,10 +8,13 @@ import kotlin.reflect.KClass
 
 
 fun main(args: Array<String>) {
+    val manager = ScraperManager(MangaSeries::class.java)
     val scrapers: ArrayList<KClass<out Scraper<MangaSeries>>> = ArrayList()
 
     scrapers.add(SevenSeasScraper::class)
     scrapers.add(YenPressScraper::class)
 
-    scrapers.forEach {ScraperManager(it)}
+    scrapers
+        .parallelStream()
+        .forEach {manager.addScraper(it)}
 }

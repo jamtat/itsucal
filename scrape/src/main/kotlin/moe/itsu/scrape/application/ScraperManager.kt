@@ -7,41 +7,30 @@ import kotlin.reflect.KClass
 
 class ScraperManager<T> {
 
+    private val scraperReturnType: Class<T>
     private val db = ItemHashDB<T>()
     private var logger: Logger
-    private var scraper: Scraper<T>
-    private var uuid = UUID.randomUUID()
-    private var scraperClass: Class<out Scraper<T>>
+    private var scrapers: MutableList<Pair<UUID, Scraper<T>>> = ArrayList()
 
-    constructor(x: Class<out Scraper<T>>) {
-        scraperClass = x
-        scraper = x.newInstance()
-        logger = Logger.getLogger("scrapermanager:${scraper.name}:${uuid}")
-        scraper.run(::onGetItem)
+
+    constructor(scraperReturnType: Class<T>) {
+        this.scraperReturnType = scraperReturnType
+        this.logger = Logger.getLogger("scrapermanager:${scraperReturnType.simpleName}")
     }
 
-    constructor(x: KClass<out Scraper<T>>): this(x.java)
+    fun addScraper(x: Class<out Scraper<T>>) {
+        val scraper = x.newInstance()
+        val uuid = UUID.randomUUID()
+        scrapers.add(Pair(uuid, scraper))
+        logger.info("scrapermanager:${scraperReturnType.simpleName}:${scraper.name}:${uuid}:starting")
+        scraper.run(onGetItem(uuid, scraper))
 
-    private fun onGetItem(item: T) {
+    }
+
+    fun addScraper(x: KClass<out Scraper<T>>) = addScraper(x.java)
+
+    private fun onGetItem(uuid: UUID, scraper: Scraper<T>): (T) -> Unit = { item ->
         db.addReplace(item)
-        logger.info("${scraper.name}:${uuid} db count: ${db.size}")
-    }
-
-    fun updateItem(item: T): T? {
-        val new = scraper.updateEntity(item)
-        if(new != null) {
-            onGetItem(new)
-        }
-
-        return new
-    }
-
-    fun getAll(): Collection<T> = db.getAll()
-
-    fun reload() {
-        db.clear()
-        scraper.stop()
-        scraper = scraperClass.newInstance()
-        scraper.run(::onGetItem)
+        logger.info("scrapermanager:${scraperReturnType.simpleName} db count: ${db.size}")
     }
 }
