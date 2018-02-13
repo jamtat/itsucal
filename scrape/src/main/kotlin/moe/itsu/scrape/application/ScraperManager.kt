@@ -29,8 +29,13 @@ class ScraperManager<T> {
 
     fun addScraper(x: KClass<out Scraper<T>>) = addScraper(x.java)
 
-    private fun onGetItem(uuid: UUID, scraper: Scraper<T>): (T) -> Unit = { item ->
+    @Synchronized
+    private fun handleGotItem(item: T) {
         db.addReplace(item)
+    }
+
+    private fun onGetItem(uuid: UUID, scraper: Scraper<T>): (T) -> Unit = { item ->
+        handleGotItem(item)
         logger.info("scrapermanager:${scraperReturnType.simpleName} db count: ${db.size}")
     }
 }
