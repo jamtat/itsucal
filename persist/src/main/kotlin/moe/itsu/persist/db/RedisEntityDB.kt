@@ -3,6 +3,7 @@ package moe.itsu.persist.db
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import moe.itsu.common.model.entity.Entity
+import moe.itsu.persist.api.EntityDB
 import redis.clients.jedis.Jedis
 import redis.clients.jedis.JedisPool
 import java.nio.channels.AlreadyConnectedException

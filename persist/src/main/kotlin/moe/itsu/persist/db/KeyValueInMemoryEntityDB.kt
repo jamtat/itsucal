@@ -1,6 +1,7 @@
 package moe.itsu.persist.db
 
 import moe.itsu.common.model.entity.Entity
+import moe.itsu.persist.api.EntityDB
 
 class KeyValueInMemoryEntityDB<T : Entity> : EntityDB<T> {
 

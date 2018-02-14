@@ -14,7 +14,7 @@ buildscript {
 
 apply plugin: 'kotlin'
 
-defaultTasks 'run'
+defaultTasks ':service:run'
 
 allprojects {
     project.ext {
