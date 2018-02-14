@@ -7,7 +7,7 @@ import moe.itsu.common.model.entity.manga.MangaSeries
 import moe.itsu.scrape.api.Scraper
 import moe.itsu.scrape.publisher.sevenseas.SevenSeasScraper
 import moe.itsu.scrape.publisher.yen.YenPressScraper
-import moe.itsu.scrape.util.StreamRepeater
+import moe.itsu.common.util.StreamRepeater
 import java.io.BufferedWriter
 import java.io.FileWriter
 import java.util.*
@@ -23,8 +23,9 @@ val om = ObjectMapper()
 
 
 fun main(args: Array<String>) {
-    val repeater = StreamRepeater<Any>()
-    val writer = BufferedWriter(FileWriter("${System.getProperty("user.dir")}/out-${UUID.randomUUID()}.out", true))
+    val writer = BufferedWriter(FileWriter("${System.getProperty("user.dir")}/out-scrape-${UUID.randomUUID()}.out", true))
+
+    val repeater = StreamRepeater<MangaSeries>()
     repeater.add {series -> println(prettyOm.writeValueAsString(series))}
     repeater.add {series ->
         writer.write(om.writeValueAsString(series) + "\n")

@@ -9,14 +9,12 @@ import kotlin.reflect.KClass
 
 class ScraperManager<T: Entity>(
     private val scraperReturnType: Class<T>,
-    private val consumer: (T) -> Any,
-    private val db: EntityDB<T> = KeyValueInMemoryEntityDB()
+    private val consumer: (T) -> Any
 ) {
     constructor(
         scraperReturnType: KClass<T>,
-        consumer: (T) -> Any,
-        db: EntityDB<T> = KeyValueInMemoryEntityDB()
-    ): this(scraperReturnType.java, consumer, db)
+        consumer: (T) -> Any
+    ): this(scraperReturnType.java, consumer)
 
     private var logger: Logger = Logger.getLogger("scrapermanager:${scraperReturnType.simpleName}")
     private var scrapers: MutableList<Triple<UUID, Thread, Scraper<T>>> = ArrayList()
@@ -37,21 +35,17 @@ class ScraperManager<T: Entity>(
 
     @Synchronized
     private fun handleGotItem(item: T) {
-        db.add(item)
         consumer(item)
     }
 
     private fun onGetItem(uuid: UUID, scraper: Scraper<T>): (T) -> Unit = { item ->
         handleGotItem(item)
-        logger.info("scrapermanager:${scraperReturnType.simpleName} db count: ${db.size}")
+        logger.info("scrapermanager:${scraperReturnType.simpleName} item with key: ${item.key}")
     }
 
     fun reload() {
         val classesToReload: List<Class<out Scraper<T>>> = scrapers.map { (_, _, scraper) -> scraper::class.java }
         scrapers.forEach { (_, thread, _) -> if (thread.isAlive) thread.interrupt() }
-        db.clear()
         classesToReload.forEach(::addScraper)
     }
-
-    fun getState(): List<T> = db.getAll().toList()
 }

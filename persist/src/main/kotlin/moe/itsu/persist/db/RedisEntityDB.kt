@@ -1,4 +1,4 @@
-package moe.itsu.scrape.application
+package moe.itsu.persist.db
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule

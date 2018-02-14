@@ -2,3 +2,5 @@ rootProject.name = 'itsucal'
 include 'scrape'
 include 'service'
 include 'common'
+include 'persist'
+

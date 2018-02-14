@@ -1,4 +1,4 @@
-package moe.itsu.scrape.util
+package moe.itsu.common.util
 
 typealias StreamRepeaterHandler<T> = (T) -> Any
 

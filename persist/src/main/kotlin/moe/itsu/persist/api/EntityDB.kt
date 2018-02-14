@@ -1,4 +1,4 @@
-package moe.itsu.scrape.application
+package moe.itsu.persist.api
 
 import moe.itsu.common.model.entity.Entity
 
