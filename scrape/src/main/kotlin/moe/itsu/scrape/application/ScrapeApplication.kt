@@ -7,18 +7,31 @@ import moe.itsu.common.model.entity.manga.MangaSeries
 import moe.itsu.scrape.api.Scraper
 import moe.itsu.scrape.publisher.sevenseas.SevenSeasScraper
 import moe.itsu.scrape.publisher.yen.YenPressScraper
+import moe.itsu.scrape.util.StreamRepeater
+import java.io.BufferedWriter
+import java.io.FileWriter
+import java.util.*
 import kotlin.reflect.KClass
 
 
-val om = ObjectMapper()
+val prettyOm = ObjectMapper()
     .registerKotlinModule()
     .enable(SerializationFeature.INDENT_OUTPUT)
 
+val om = ObjectMapper()
+    .registerKotlinModule()
+
 
 fun main(args: Array<String>) {
+    val repeater = StreamRepeater<Any>()
+    val writer = BufferedWriter(FileWriter("${System.getProperty("user.dir")}/${UUID.randomUUID()}.out", true))
+    repeater.add {series -> println(prettyOm.writeValueAsString(series))}
+    repeater.add {series -> writer.write(om.writeValueAsString(series) + "\n")}
+
+
     val manager = ScraperManager(
         MangaSeries::class.java,
-        {series -> println(om.writeValueAsString(series))}
+        repeater
     )
     val scrapers: ArrayList<KClass<out Scraper<MangaSeries>>> = ArrayList()
 
