@@ -24,15 +24,18 @@ val om = ObjectMapper()
 
 fun main(args: Array<String>) {
     val repeater = StreamRepeater<Any>()
-    val writer = BufferedWriter(FileWriter("${System.getProperty("user.dir")}/${UUID.randomUUID()}.out", true))
+    val writer = BufferedWriter(FileWriter("${System.getProperty("user.dir")}/out-${UUID.randomUUID()}.out", true))
     repeater.add {series -> println(prettyOm.writeValueAsString(series))}
-    repeater.add {series -> writer.write(om.writeValueAsString(series) + "\n")}
-
+    repeater.add {series ->
+        writer.write(om.writeValueAsString(series) + "\n")
+        writer.flush()
+    }
 
     val manager = ScraperManager(
         MangaSeries::class.java,
         repeater
     )
+
     val scrapers: ArrayList<KClass<out Scraper<MangaSeries>>> = ArrayList()
 
     scrapers.add(SevenSeasScraper::class)
