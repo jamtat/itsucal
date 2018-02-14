@@ -42,4 +42,5 @@ fun main(args: Array<String>) {
     scrapers.add(YenPressScraper::class)
 
     scrapers.forEach {manager.addScraper(it)}
+    manager.getState().forEach { series -> println(prettyOm.writeValueAsString(series)) }
 }

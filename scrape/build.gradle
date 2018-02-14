@@ -16,6 +16,7 @@ dependencies {
     compile project(':common')
     compile "khttp:khttp:$khttp_version"
     compile "org.jsoup:jsoup:$jsoup_version"
+    compile "redis.clients:jedis:$jedis_version"
 }
 
 compileKotlin {
