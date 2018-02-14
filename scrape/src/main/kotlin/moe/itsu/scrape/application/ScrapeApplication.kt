@@ -32,7 +32,7 @@ fun main(args: Array<String>) {
     }
 
     val manager = ScraperManager(
-        MangaSeries::class.java,
+        MangaSeries::class,
         repeater
     )
 
@@ -42,5 +42,4 @@ fun main(args: Array<String>) {
     scrapers.add(YenPressScraper::class)
 
     scrapers.forEach {manager.addScraper(it)}
-    manager.getState().forEach { series -> println(prettyOm.writeValueAsString(series)) }
 }

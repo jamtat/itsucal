@@ -9,9 +9,15 @@ import kotlin.reflect.KClass
 
 class ScraperManager<T: Entity>(
     private val scraperReturnType: Class<T>,
-    private val consumer: (T) -> Any
+    private val consumer: (T) -> Any,
+    private val db: EntityDB<T> = KeyValueInMemoryEntityDB()
 ) {
-    private val db: EntityDB<T> = RedisEntityDB(scraperReturnType).connect()
+    constructor(
+        scraperReturnType: KClass<T>,
+        consumer: (T) -> Any,
+        db: EntityDB<T> = KeyValueInMemoryEntityDB()
+    ): this(scraperReturnType.java, consumer, db)
+
     private var logger: Logger = Logger.getLogger("scrapermanager:${scraperReturnType.simpleName}")
     private var scrapers: MutableList<Triple<UUID, Thread, Scraper<T>>> = ArrayList()
 
