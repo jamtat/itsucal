@@ -18,5 +18,7 @@ interface EntityDB<T: Entity> {
 
     fun addOrReplace(item: T): Boolean
 
+    fun get(key: String): T?
+
     fun getAll(): Collection<T>
 }

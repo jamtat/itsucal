@@ -34,8 +34,10 @@ class RedisEntityDB<T: Entity>(private val entityType: Class<T>) : EntityDB<T> {
         return this
     }
 
+    private fun redisKeyFromKey(key: String): String = "entitydb:${entityType.simpleName}:$key"
+
     private val T.redisKey: String
-        get() = "entitydb:${entityType.simpleName}:${this.key}"
+        get() = redisKeyFromKey(this.key)
 
     private val T.redisJSON: String
         get() = om.writeValueAsString(this)
@@ -76,6 +78,14 @@ class RedisEntityDB<T: Entity>(private val entityType: Class<T>) : EntityDB<T> {
         val had = has(item)
         add(item)
         return had
+    }
+
+    override fun get(key: String): T? {
+        redis?.use {
+            return if(it.exists(redisKeyFromKey(key)))
+                om.readValue(it.get(redisKeyFromKey(key)), entityType)
+            else null
+        } ?: return null
     }
 
     override fun getAll(): List<T> {

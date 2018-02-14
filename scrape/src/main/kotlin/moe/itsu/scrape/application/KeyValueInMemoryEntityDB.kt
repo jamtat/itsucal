@@ -3,6 +3,7 @@ package moe.itsu.scrape.application
 import moe.itsu.common.model.entity.Entity
 
 class KeyValueInMemoryEntityDB<T : Entity> : EntityDB<T> {
+
     private val map = HashMap<String, T>()
 
     override val size: Int
@@ -34,6 +35,8 @@ class KeyValueInMemoryEntityDB<T : Entity> : EntityDB<T> {
         add(item)
         return had
     }
+
+    override fun get(key: String): T? = map[key]
 
     override fun getAll(): Collection<T> = map.values
 }
