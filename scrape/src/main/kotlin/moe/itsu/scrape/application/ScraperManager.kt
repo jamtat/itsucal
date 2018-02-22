@@ -48,4 +48,10 @@ class ScraperManager<T: Entity>(
         scrapers.forEach { (_, thread, _) -> if (thread.isAlive) thread.interrupt() }
         classesToReload.forEach(::addScraper)
     }
+
+    fun clear() {
+        logger.info("scrapermanager:${scraperReturnType.simpleName} clearing all scrapers")
+        scrapers.forEach { (_, thread, _) -> if (thread.isAlive) thread.interrupt() }
+        scrapers.clear()
+    }
 }

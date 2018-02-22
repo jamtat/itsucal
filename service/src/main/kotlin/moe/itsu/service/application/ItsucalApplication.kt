@@ -6,6 +6,7 @@ import io.dropwizard.setup.Bootstrap
 import io.dropwizard.setup.Environment
 import moe.itsu.service.resources.HealthCheckResource
 import moe.itsu.service.resources.MangaSeriesResource
+import moe.itsu.service.tasks.ScraperTask
 
 fun main(args: Array<String>) {
     ItsucalApplication().run(*args)
@@ -17,8 +18,10 @@ class ItsucalApplication : Application<ItsucalApplicationConfiguration>() {
         configuration: ItsucalApplicationConfiguration,
         environment: Environment
     ) {
-        val mangaServiesResource = MangaSeriesResource()
-        environment.jersey().register(mangaServiesResource)
+        environment.jersey().register(MangaSeriesResource())
+
+        environment.admin().addTask(ScraperTask)
+
         environment.healthChecks().register("noice", HealthCheckResource())
     }
 
