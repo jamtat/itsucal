@@ -7,6 +7,7 @@ import moe.itsu.common.model.entity.manga.MangaSeries
 import moe.itsu.persist.db.RedisEntityDB
 import moe.itsu.scrape.api.Scraper
 import moe.itsu.scrape.application.ScraperManager
+import moe.itsu.scrape.publisher.kodansha.KodanshaComicsScraper
 import moe.itsu.scrape.publisher.sevenseas.SevenSeasScraper
 import moe.itsu.scrape.publisher.verticalcomics.VerticalComicsScraper
 import moe.itsu.scrape.publisher.yen.YenPressScraper
@@ -59,7 +60,8 @@ object ScraperTask : Task("scrape") {
             listOf(
                 YenPressScraper::class,
                 SevenSeasScraper::class,
-                VerticalComicsScraper::class
+                VerticalComicsScraper::class,
+                KodanshaComicsScraper::class
             ))
     )
 

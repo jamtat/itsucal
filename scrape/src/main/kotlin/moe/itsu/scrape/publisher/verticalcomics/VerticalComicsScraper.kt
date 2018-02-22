@@ -4,6 +4,7 @@ import khttp.get
 import moe.itsu.common.model.entity.manga.ISBN13
 import moe.itsu.common.model.entity.manga.Manga
 import moe.itsu.common.model.entity.manga.MangaSeries
+import moe.itsu.common.util.findMonth
 import moe.itsu.scrape.api.AbstractScraper
 import moe.itsu.scrape.api.ScraperException
 import org.jsoup.Jsoup
@@ -72,7 +73,7 @@ class VerticalComicsScraper : AbstractScraper<MangaSeries>() {
             }
     }
 
-    private fun fetchSeriesFromMap(name: String, homepageMangaItems: List<VerticalComicsHomepageMangaItem>): MangaSeries? {
+    private fun fetchSeriesFromMap(seriesName: String, homepageMangaItems: List<VerticalComicsHomepageMangaItem>): MangaSeries? {
         val items = homepageMangaItems
             .parallelStream()
             .map(::fetchMangaFromHomepageMangaItem)
@@ -80,30 +81,12 @@ class VerticalComicsScraper : AbstractScraper<MangaSeries>() {
             .filterNotNull()
 
         return MangaSeries(
-            name = name,
-            publisher = "verticalcomics",
+            name = seriesName,
+            publisher = name,
             items = items,
             publisherUrl = ""
         )
     }
-
-    private val months = listOf(
-        "January",
-        "February",
-        "March",
-        "April",
-        "May",
-        "June",
-        "July",
-        "August",
-        "September",
-        "October",
-        "November",
-        "December"
-    ).map { it.toLowerCase() }
-
-    private fun findMonth(monthString: String): Int =
-        months.indexOfFirst { m -> m.indexOf(monthString.toLowerCase()) == 0 } + 1
 
     private fun fetchMangaFromHomepageMangaItem(item: VerticalComicsHomepageMangaItem): Manga? {
 

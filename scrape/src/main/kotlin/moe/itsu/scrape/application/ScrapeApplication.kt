@@ -8,6 +8,7 @@ import moe.itsu.scrape.api.Scraper
 import moe.itsu.scrape.publisher.sevenseas.SevenSeasScraper
 import moe.itsu.scrape.publisher.yen.YenPressScraper
 import moe.itsu.common.util.StreamRepeater
+import moe.itsu.scrape.publisher.kodansha.KodanshaComicsScraper
 import moe.itsu.scrape.publisher.verticalcomics.VerticalComicsScraper
 import java.io.BufferedWriter
 import java.io.FileWriter
@@ -43,6 +44,7 @@ fun main(args: Array<String>) {
     scrapers.add(SevenSeasScraper::class)
     scrapers.add(YenPressScraper::class)
     scrapers.add(VerticalComicsScraper::class)
+    scrapers.add(KodanshaComicsScraper::class)
 
     scrapers.forEach {manager.addScraper(it)}
 }
