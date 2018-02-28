@@ -1,5 +1,6 @@
 package moe.itsu.service.application
 
+import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import io.dropwizard.Application
 import io.dropwizard.setup.Bootstrap
@@ -26,6 +27,8 @@ class ItsucalApplication : Application<ItsucalApplicationConfiguration>() {
     }
 
     override fun initialize(bootstrap: Bootstrap<ItsucalApplicationConfiguration>) {
-        bootstrap.objectMapper.registerKotlinModule()
+        bootstrap.objectMapper
+                .registerKotlinModule()
+                .enable(SerializationFeature.INDENT_OUTPUT)
     }
 }
