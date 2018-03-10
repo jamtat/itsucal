@@ -1,7 +1,5 @@
 buildscript {
-    ext {
-        kotlin_version = '1.2.21'
-    }
+    ext.kotlin_version = '1.2.30'
 
     repositories {
         mavenCentral()
@@ -18,13 +16,14 @@ defaultTasks ':service:run'
 
 allprojects {
     project.ext {
-        kotlin_version = '1.2.21'
+        kotlin_version = '1.2.30'
         dropwizard_version = '1.2.2'
         jackson_module_kotlin_version = '2.9.4.1'
         jackson_version = '2.9.4'
         jsoup_version = '1.11.2'
         khttp_version = '0.1.0'
         jedis_version = '2.9.0'
+        commons_text_version = '1.2'
     }
 
     repositories {

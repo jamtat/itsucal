@@ -8,6 +8,4 @@ import javax.ws.rs.Path
 class MangaSeriesResource: EntityProvidingCalendarResource<MangaSeries>(
     MangaSeries::class,
     RedisEntityDB(MangaSeries::class).connect()
-) {
-
-}
+)

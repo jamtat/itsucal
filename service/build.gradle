@@ -1,5 +1,5 @@
 buildscript {
-    ext.kotlin_version = '1.2.21'
+    ext.kotlin_version = '1.2.30'
 
     repositories {
         mavenCentral()
@@ -24,6 +24,7 @@ dependencies {
     compile project(':persist')
     compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
     compile "io.dropwizard:dropwizard-core:$dropwizard_version"
+    compile "org.apache.commons:commons-text:$commons_text_version"
 }
 
 compileKotlin {
