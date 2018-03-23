@@ -37,6 +37,13 @@ object ScraperTask : Task("scrape") {
             .groupBy { it.newInstance().name }
             .mapValues { it.value.first() }
 
+        val scraperKeys: List<String>
+            get() = scraperMap.keys.toList()
+
+        fun scrapeAll(output: PrintWriter) {
+            scrape(scraperKeys, output)
+        }
+
         fun scrape(scrapers: List<String>, output: PrintWriter) {
             manager.clear()
 
@@ -69,6 +76,12 @@ object ScraperTask : Task("scrape") {
         val scrapeTask = parameters.get("type")?.first()?.let { typeMap[it] }
             ?: throw InvalidEntityTypeException()
 
-        scrapeTask.scrape(parameters.get("scrapers").toList(), output)
+        val scrapers = parameters.get("scrapers")?.toList() ?: emptyList<String>()
+
+        if(scrapers.size == 1 && scrapers[0] == "all") {
+            scrapeTask.scrapeAll(output)
+        } else {
+            scrapeTask.scrape(scrapers, output)
+        }
     }
 }
