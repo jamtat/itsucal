@@ -49,6 +49,32 @@ abstract class EntityProvidingCalendarResource<T: EntityProvidingCalendar>(
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("/dump")
+    fun dump(): Response {
+        val allItems = db.getAll()
+        val keyed = allItems.groupBy { it.key }
+        return Response.ok(object {
+            val type = entityType.simpleName
+            val items = keyed
+        }).build()
+    }
+
+    @GET
+    @Produces(MediaType.TEXT_PLAIN)
+    @Path("/count")
+    fun count(): Response {
+        return Response.ok(db.size).build()
+    }
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/list")
+    fun list(): Response {
+        return Response.ok(db.getAll().map { it.key }.toList()).build()
+    }
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
     @Path("/search")
     fun search(
         @QueryParam("q") searchString: String
