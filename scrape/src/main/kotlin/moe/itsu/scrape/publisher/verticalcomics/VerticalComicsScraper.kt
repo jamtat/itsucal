@@ -34,7 +34,7 @@ class VerticalComicsScraper : AbstractMultiScraper() {
 
     private fun fetchAllSeries(consumer: (Entity) -> Unit): List<MangaSeries> {
         logger.info("Fetching all series from $SERIES_LIST_URL")
-        val response = get(SERIES_LIST_URL)
+        val response = get(SERIES_LIST_URL, cache = false)
 
         if(response.statusCode != 200) {
             throw ScraperException("Could not fetch series from $SERIES_LIST_URL")

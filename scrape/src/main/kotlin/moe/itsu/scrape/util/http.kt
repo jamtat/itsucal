@@ -38,8 +38,8 @@ object http {
         }
     }
 
-    fun get(url: String, params: Map<String, String> = mapOf()): Response =
-        if (CACHE_ENABLED)
+    fun get(url: String, params: Map<String, String> = mapOf(), cache: Boolean = CACHE_ENABLED): Response =
+        if (cache)
             cachedGet(url, params)
         else
             uncachedGet(url, params)
