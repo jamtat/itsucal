@@ -19,6 +19,9 @@ class ISBN13(code: String) : JsonSerializable {
 
     private val code: String = code.filter { ISBN_ALLOWED_CHARS.matches(it.toString()) }
 
+    val valid: Boolean
+        get() = code.length == 13
+
     override fun toString(): String = code
 
     override fun equals(other: Any?): Boolean = other.toString() == toString()

@@ -17,7 +17,6 @@ repositories {
 
 dependencies {
     compile project(':common')
-    compile "redis.clients:jedis:$jedis_version"
 }
 
 compileKotlin {

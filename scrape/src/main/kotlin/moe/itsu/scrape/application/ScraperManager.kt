@@ -40,7 +40,7 @@ class ScraperManager<T: Entity>(
 
     private fun onGetItem(uuid: UUID, scraper: Scraper<T>): (T) -> Unit = { item ->
         handleGotItem(item)
-        logger.info("scrapermanager:${scraperReturnType.simpleName} item with key: ${item.key}")
+        logger.info("scrapermanager:${item.javaClass.simpleName} item with key: ${item.key}")
     }
 
     fun reload() {

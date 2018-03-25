@@ -1,6 +1,5 @@
 package moe.itsu.scrape.publisher.verticalcomics
 
-import khttp.get
 import moe.itsu.common.model.entity.Entity
 import moe.itsu.common.model.entity.manga.ISBN13
 import moe.itsu.common.model.entity.manga.Manga
@@ -8,6 +7,7 @@ import moe.itsu.common.model.entity.manga.MangaSeries
 import moe.itsu.common.util.findMonth
 import moe.itsu.scrape.api.AbstractMultiScraper
 import moe.itsu.scrape.api.ScraperException
+import moe.itsu.scrape.util.http.get
 import org.jsoup.Jsoup
 import java.time.DateTimeException
 import java.time.LocalDate

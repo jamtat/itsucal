@@ -4,6 +4,7 @@ import moe.itsu.common.model.entity.PurchaseInformation
 import moe.itsu.common.model.entity.manga.ISBN13
 import moe.itsu.common.model.entity.manga.Manga
 import moe.itsu.scrape.api.AbstractPurchaseInformationProvider
+import moe.itsu.scrape.util.http.get
 import org.jsoup.Jsoup
 
 
@@ -14,7 +15,7 @@ class BookDepositoryPurchaseInformationProvider : AbstractPurchaseInformationPro
             "searchIsbn" to isbn.toString(),
             "advanced" to "true"
         )
-        val response = khttp.get(
+        val response = get(
             url = "https://www.bookdepository.com/search",
             params = urlParams
         )

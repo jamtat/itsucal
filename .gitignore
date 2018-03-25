@@ -13,3 +13,5 @@ out/
 # Misc
 *.log
 *.out
+
+.itsucal/

@@ -1,13 +1,14 @@
 package moe.itsu.scrape.publisher.kodansha
 
-import khttp.get
 import moe.itsu.common.model.entity.Entity
 import moe.itsu.common.model.entity.manga.ISBN13
 import moe.itsu.common.model.entity.manga.Manga
+import moe.itsu.common.model.entity.manga.MangaFormat
 import moe.itsu.common.model.entity.manga.MangaSeries
 import moe.itsu.common.util.findMonth
 import moe.itsu.scrape.api.AbstractMultiScraper
 import moe.itsu.scrape.api.ScraperException
+import moe.itsu.scrape.util.http.get
 import org.jsoup.Jsoup
 import java.time.DateTimeException
 import java.time.LocalDate
@@ -103,15 +104,28 @@ class KodanshaComicsScraper : AbstractMultiScraper() {
             return null
         }
 
-        val container = Jsoup.parse(response.text).selectFirst("#container")
+        val document = Jsoup.parse(response.text)
+
+        val container = document.selectFirst("#container")
 
         val itemName = container.selectFirst(".volume__title").text()
 
-        val isbn = container.selectFirst("img")
+        var isbn = container.selectFirst("img")
             ?.attr("src")
             ?.split("/")?.last()
             ?.split("-")?.first()
             ?.let { ISBN13(it) }
+
+        var format = MangaFormat.PRINT
+
+        if(isbn != null && !isbn.valid) {
+            isbn = document.selectFirst("li.logo--nook")
+                ?.attr("href")
+                ?.split("ean=")?.last()
+                ?.let { ISBN13(it) }
+
+            format = MangaFormat.DIGITAL
+        }
 
         if (isbn == null) {
             logger.warning("Could not parse ISBN from $itemUrl")
@@ -148,6 +162,7 @@ class KodanshaComicsScraper : AbstractMultiScraper() {
             name = itemName,
             releaseDate = releaseDate ?: LocalDate.MIN,
             isbn13 = isbn,
+            format = format,
             pageCount = pageCount ?: 0,
             publisherUrl = itemUrl
         )
