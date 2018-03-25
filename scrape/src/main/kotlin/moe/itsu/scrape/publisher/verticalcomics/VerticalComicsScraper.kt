@@ -1,24 +1,25 @@
 package moe.itsu.scrape.publisher.verticalcomics
 
 import khttp.get
+import moe.itsu.common.model.entity.Entity
 import moe.itsu.common.model.entity.manga.ISBN13
 import moe.itsu.common.model.entity.manga.Manga
 import moe.itsu.common.model.entity.manga.MangaSeries
 import moe.itsu.common.util.findMonth
-import moe.itsu.scrape.api.AbstractScraper
+import moe.itsu.scrape.api.AbstractMultiScraper
 import moe.itsu.scrape.api.ScraperException
 import org.jsoup.Jsoup
 import java.time.DateTimeException
 import java.time.LocalDate
 import java.util.stream.Collectors
 
-class VerticalComicsScraper : AbstractScraper<MangaSeries>() {
+class VerticalComicsScraper : AbstractMultiScraper() {
 
     private val SERIES_LIST_URL = "http://vertical-comics.com/books.php"
 
     override val name = "verticalcomics"
 
-    override fun run(consumer: (MangaSeries) -> Unit) {
+    override fun run(consumer: (Entity) -> Unit) {
         super.run(consumer)
 
         fetchAllSeries(consumer)
@@ -31,7 +32,7 @@ class VerticalComicsScraper : AbstractScraper<MangaSeries>() {
         val link: String
     )
 
-    private fun fetchAllSeries(consumer: (MangaSeries) -> Unit): List<MangaSeries> {
+    private fun fetchAllSeries(consumer: (Entity) -> Unit): List<MangaSeries> {
         logger.info("Fetching all series from $SERIES_LIST_URL")
         val response = get(SERIES_LIST_URL)
 
@@ -66,14 +67,19 @@ class VerticalComicsScraper : AbstractScraper<MangaSeries>() {
 
         return seriesMap.toList()
             .mapNotNull { (name, homepageMangaItems) ->
-                val series = fetchSeriesFromMap(name, homepageMangaItems)
-                if(series !== null)
-                    consumer(series)
-                series
+                val seriesPair = fetchSeriesFromMap(name, homepageMangaItems)
+                if(seriesPair !== null) {
+                    seriesPair.second.forEach(consumer)
+                    consumer(seriesPair.first)
+                }
+                seriesPair?.first
             }
     }
 
-    private fun fetchSeriesFromMap(seriesName: String, homepageMangaItems: List<VerticalComicsHomepageMangaItem>): MangaSeries? {
+    private fun fetchSeriesFromMap(
+        seriesName: String,
+        homepageMangaItems: List<VerticalComicsHomepageMangaItem>
+    ): Pair<MangaSeries, List<Manga>>? {
         val items = homepageMangaItems
             .parallelStream()
             .map(::fetchMangaFromHomepageMangaItem)
@@ -83,9 +89,9 @@ class VerticalComicsScraper : AbstractScraper<MangaSeries>() {
         return MangaSeries(
             name = seriesName,
             publisher = name,
-            items = items,
+            items = items.map { it.isbn13 },
             publisherUrl = ""
-        )
+        ) to items
     }
 
     private fun fetchMangaFromHomepageMangaItem(item: VerticalComicsHomepageMangaItem): Manga? {

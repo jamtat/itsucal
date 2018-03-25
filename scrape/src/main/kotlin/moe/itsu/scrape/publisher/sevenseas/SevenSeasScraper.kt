@@ -1,31 +1,35 @@
 package moe.itsu.scrape.publisher.sevenseas
 
 import khttp.get
+import moe.itsu.common.model.entity.Entity
 import moe.itsu.common.model.entity.manga.ISBN13
 import moe.itsu.common.model.entity.manga.Manga
 import moe.itsu.common.model.entity.manga.MangaFormat
 import moe.itsu.common.model.entity.manga.MangaSeries
-import moe.itsu.scrape.api.AbstractScraper
+import moe.itsu.scrape.api.AbstractMultiScraper
 import moe.itsu.scrape.api.ScraperException
 import org.jsoup.Jsoup
 import java.time.LocalDate
 import java.util.stream.Collectors
 
-class SevenSeasScraper : AbstractScraper<MangaSeries>() {
+class SevenSeasScraper : AbstractMultiScraper() {
 
     private val SERIES_LIST_URL = "http://www.sevenseasentertainment.com/series-list/"
 
     override val name = "sevenseas"
 
-    override fun run(consumer: (MangaSeries) -> Unit) {
+    override fun run(consumer: (Entity) -> Unit) {
         super.run(consumer)
 
         fetchAllSeries(consumer)
     }
 
-    override fun updateEntity(entity: MangaSeries): MangaSeries? = fetchSeries(entity.publisherUrl)
+    override fun updateEntity(entity: Entity): Entity? = when(entity) {
+        is MangaSeries -> fetchSeries(entity.publisherUrl)?.first
+        else -> null
+    }
 
-    private fun fetchAllSeries(consumer: (MangaSeries) -> Unit): List<MangaSeries> {
+    private fun fetchAllSeries(consumer: (Entity) -> Unit): List<MangaSeries> {
         val urlList = ArrayList<String>()
 
         logger.info("Fetching all series from $SERIES_LIST_URL")
@@ -48,15 +52,17 @@ class SevenSeasScraper : AbstractScraper<MangaSeries>() {
         return urlList
             .parallelStream()
             .map {
-                val series = fetchSeries(it)
-                if(series != null)
-                    consumer(series)
-                series
+                val seriesPair = fetchSeries(it)
+                if(seriesPair != null) {
+                    seriesPair.second.forEach(consumer)
+                    consumer(seriesPair.first)
+                }
+                seriesPair?.first
             }.collect(Collectors.toList())
             .filterNotNull()
     }
 
-    private fun fetchSeries(seriesUrl: String): MangaSeries? {
+    private fun fetchSeries(seriesUrl: String): Pair<MangaSeries, List<Manga>>? {
         logger.info("Fetching series from $seriesUrl")
         val response = get(seriesUrl)
 
@@ -83,7 +89,7 @@ class SevenSeasScraper : AbstractScraper<MangaSeries>() {
             ?.trim()
 
         val otherNames: List<String> = when(originalTitle) {
-            null -> ArrayList<String>()
+            null -> ArrayList()
             else -> listOf(originalTitle)
         }
 
@@ -128,13 +134,9 @@ class SevenSeasScraper : AbstractScraper<MangaSeries>() {
         return MangaSeries(
             name = seriesName,
             publisher = name,
-            items = items,
+            items = items.map { it.isbn13 },
             publisherUrl = seriesUrl,
             otherNames = otherNames
-        )
-    }
-
-    override fun stop() {
-        TODO("not implemented")
+        ) to items
     }
 }

@@ -1,41 +1,47 @@
 package moe.itsu.scrape.publisher.kodansha
 
 import khttp.get
+import moe.itsu.common.model.entity.Entity
 import moe.itsu.common.model.entity.manga.ISBN13
 import moe.itsu.common.model.entity.manga.Manga
 import moe.itsu.common.model.entity.manga.MangaSeries
 import moe.itsu.common.util.findMonth
-import moe.itsu.scrape.api.AbstractScraper
+import moe.itsu.scrape.api.AbstractMultiScraper
 import moe.itsu.scrape.api.ScraperException
 import org.jsoup.Jsoup
 import java.time.DateTimeException
 import java.time.LocalDate
 import java.util.stream.Collectors
 
-class KodanshaComicsScraper : AbstractScraper<MangaSeries>() {
+class KodanshaComicsScraper : AbstractMultiScraper() {
 
     private val SERIES_LIST_URL = "https://kodanshacomics.com/series/"
 
     override val name = "kodansha"
 
-    override fun run(consumer: (MangaSeries) -> Unit) {
+    override fun run(consumer: (Entity) -> Unit) {
         super.run(consumer)
 
         fetchBookSeries(consumer)
     }
 
-    override fun updateEntity(entity: MangaSeries): MangaSeries? = fetchBookSeries(entity.publisherUrl)
+    override fun updateEntity(entity: Entity): Entity? = when(entity){
+        is MangaSeries -> fetchBookSeries(entity.publisherUrl)?.first
+        else -> null
+    }
 
-    private fun fetchBookSeries(consumer: (MangaSeries) -> Unit): List<MangaSeries> {
+    private fun fetchBookSeries(consumer: (Entity) -> Unit): List<MangaSeries> {
         val seriesUrls: List<String> = fetchBookSeriesURLList()
 
         return seriesUrls
             .parallelStream()
             .map {
-                val series = fetchBookSeries(it)
-                if (series != null)
-                    consumer(series)
-                series
+                val seriesPair = fetchBookSeries(it)
+                if (seriesPair != null) {
+                    seriesPair.second.forEach(consumer)
+                    consumer(seriesPair.first)
+                }
+                seriesPair?.first
             }.collect(Collectors.toList())
             .filterNotNull()
     }
@@ -54,7 +60,7 @@ class KodanshaComicsScraper : AbstractScraper<MangaSeries>() {
             .mapNotNull {it.attr("href")}
     }
 
-    private fun fetchBookSeries(seriesUrl: String): MangaSeries? {
+    private fun fetchBookSeries(seriesUrl: String): Pair<MangaSeries, List<Manga>>? {
         logger.info("Fetching series from $seriesUrl")
         val response = get(seriesUrl)
 
@@ -83,9 +89,9 @@ class KodanshaComicsScraper : AbstractScraper<MangaSeries>() {
         return MangaSeries(
             name = seriesName,
             publisher = name,
-            items = items,
+            items = items.map { it.isbn13 },
             publisherUrl = seriesUrl
-        )
+        ) to items
     }
 
     private fun fetchItemFromUrl(itemUrl: String): Manga? {

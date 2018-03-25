@@ -1,6 +1,7 @@
 package moe.itsu.service.resources
 
-import moe.itsu.common.model.entity.EntityProvidingCalendar
+import moe.itsu.common.model.calendar.Calendar
+import moe.itsu.common.model.entity.Entity
 import moe.itsu.persist.api.EntityDB
 import moe.itsu.persist.db.KeyValueInMemoryEntityDB
 import moe.itsu.service.search.SearchService
@@ -11,10 +12,10 @@ import javax.ws.rs.core.Response
 import kotlin.reflect.KClass
 
 
-abstract class EntityProvidingCalendarResource<T: EntityProvidingCalendar>(
-    private val entityType: Class<T>,
-    private val db: EntityDB<T> = KeyValueInMemoryEntityDB(),
-    private val searchService: SearchService<T> = SimpleEntitySearchService(entityType, db)
+abstract class EntityProvidingCalendarResource<T: Entity>(
+    protected val entityType: Class<T>,
+    protected val db: EntityDB<T> = KeyValueInMemoryEntityDB(),
+    protected val searchService: SearchService<T> = SimpleEntitySearchService(entityType, db)
 ) {
 
     constructor(
@@ -22,6 +23,12 @@ abstract class EntityProvidingCalendarResource<T: EntityProvidingCalendar>(
         db: EntityDB<T> = KeyValueInMemoryEntityDB(),
         searchService: SearchService<T> = SimpleEntitySearchService(entityType, db)
     ): this(entityType.java, db, searchService)
+
+    abstract fun toCalendar(item: T): Calendar
+
+    open fun composeItem(item: T): Any {
+        return item
+    }
 
     @GET
     @Produces("text/calendar")
@@ -32,7 +39,7 @@ abstract class EntityProvidingCalendarResource<T: EntityProvidingCalendar>(
         val item = db.get(key)
         if (item == null)
             return Response.status(Response.Status.NOT_FOUND).build()
-        return Response.ok(item.toCalendar().toString()).build()
+        return Response.ok(toCalendar(item).toString()).build()
     }
 
     @GET
@@ -44,7 +51,7 @@ abstract class EntityProvidingCalendarResource<T: EntityProvidingCalendar>(
         val item = db.get(key)
         if (item == null)
             return Response.status(Response.Status.NOT_FOUND).build()
-        return Response.ok(item).build()
+        return Response.ok(composeItem(item)).build()
     }
 
     @GET
@@ -56,6 +63,7 @@ abstract class EntityProvidingCalendarResource<T: EntityProvidingCalendar>(
         return Response.ok(object {
             val type = entityType.simpleName
             val items = keyed
+                .mapValues { composeItem(it.value.first()) }
         }).build()
     }
 

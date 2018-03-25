@@ -3,6 +3,7 @@ package moe.itsu.service.tasks
 import com.google.common.collect.ImmutableMultimap
 import io.dropwizard.servlets.tasks.Task
 import moe.itsu.common.model.entity.Entity
+import moe.itsu.common.model.entity.manga.Manga
 import moe.itsu.common.model.entity.manga.MangaSeries
 import moe.itsu.persist.db.RedisEntityDB
 import moe.itsu.scrape.api.Scraper
@@ -17,24 +18,23 @@ import kotlin.reflect.KClass
 
 object ScraperTask : Task("scrape") {
 
-    class ScrapeTask<T: Entity>(
-        type: Class<T>,
-        scrapers: List<Class<out Scraper<T>>>
+    class ScrapeTask(
+        scrapers: List<KClass<out Scraper<Entity>>>
     ) {
-        constructor(
-            type: KClass<T>,
-            scrapers: List<KClass<out Scraper<T>>>
-        ): this(type.java, scrapers.map {it.java})
 
-        private val db: RedisEntityDB<T> = RedisEntityDB(type).connect()
+        private val mangaSeriesDB: RedisEntityDB<MangaSeries> = RedisEntityDB(MangaSeries::class).connect()
+        private val mangaDB: RedisEntityDB<Manga> = RedisEntityDB(Manga::class).connect()
 
-        private val manager: ScraperManager<T> = ScraperManager(
-            type,
-            {item -> db.add(item)}
+        private val manager: ScraperManager<Entity> = ScraperManager(
+            Entity::class,
+            {item -> when(item) {
+                is MangaSeries -> mangaSeriesDB.add(item)
+                is Manga -> mangaDB.add(item)
+            }}
         )
 
-        private val scraperMap: Map<String, Class<out Scraper<T>>> = scrapers
-            .groupBy { it.newInstance().name }
+        private val scraperMap: Map<String, KClass<out Scraper<Entity>>> = scrapers
+            .groupBy { it.java.newInstance().name }
             .mapValues { it.value.first() }
 
         val scraperKeys: List<String>
@@ -61,9 +61,8 @@ object ScraperTask : Task("scrape") {
 
     class InvalidEntityTypeException : BadRequestException()
 
-    private val typeMap: Map<String, ScrapeTask<out Entity>> = hashMapOf(
+    private val typeMap: Map<String, ScrapeTask> = hashMapOf(
         "mangaseries" to ScrapeTask(
-            MangaSeries::class,
             listOf(
                 YenPressScraper::class,
                 SevenSeasScraper::class,

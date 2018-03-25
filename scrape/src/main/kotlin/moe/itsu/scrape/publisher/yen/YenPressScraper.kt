@@ -1,33 +1,38 @@
 package moe.itsu.scrape.publisher.yen
 
 import khttp.get
+import moe.itsu.common.model.entity.Entity
 import moe.itsu.common.model.entity.manga.ISBN13
 import moe.itsu.common.model.entity.manga.Manga
 import moe.itsu.common.model.entity.manga.MangaFormat
 import moe.itsu.common.model.entity.manga.MangaSeries
-import moe.itsu.scrape.api.AbstractScraper
+import moe.itsu.scrape.api.AbstractMultiScraper
 import moe.itsu.scrape.api.ScraperException
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
 import java.time.LocalDate
 import java.util.stream.Collectors
 
-class YenPressScraper : AbstractScraper<MangaSeries>() {
+class YenPressScraper : AbstractMultiScraper() {
 
     private val SERIES_LIST_URL = "http://yenpress.com/books/"
     private val TITLE_BASE_URL = "http://b2c.hachettebookgroup.com"
 
     override val name = "yenpress"
 
-    override fun run(consumer: (MangaSeries) -> Unit) {
+    override fun run(consumer: (Entity) -> Unit) {
         super.run(consumer)
 
         fetchBookSeries(consumer)
     }
 
-    override fun updateEntity(entity: MangaSeries): MangaSeries? = fetchBookSeries(entity.publisherUrl)
+    override fun updateEntity(entity: Entity): Entity? = when(entity) {
+        is MangaSeries -> fetchBookSeries(entity.publisherUrl)?.first
+        is Manga -> fetchDetailForItem(entity.publisherUrl)
+        else -> null
+    }
 
-    private fun fetchBookSeries(consumer: (MangaSeries) -> Unit): List<MangaSeries> {
+    private fun fetchBookSeries(consumer: (Entity) -> Unit): List<MangaSeries> {
         // We don't compose the MangaSeries here, because their
         // series page spells some titles wrong.
         // In particular they misspell Today's Cerberus which
@@ -39,10 +44,12 @@ class YenPressScraper : AbstractScraper<MangaSeries>() {
         return seriesUrls
             .parallelStream()
             .map {
-                val series = fetchBookSeries(it)
-                if (series != null)
-                    consumer(series)
-                series
+                val seriesPair = fetchBookSeries(it)
+                if (seriesPair != null) {
+                    seriesPair.second.forEach(consumer)
+                    consumer(seriesPair.first)
+                }
+                seriesPair?.first
             }.collect(Collectors.toList())
             .filterNotNull()
     }
@@ -80,7 +87,7 @@ class YenPressScraper : AbstractScraper<MangaSeries>() {
         return list
     }
 
-    private fun fetchBookSeries(seriesUrl: String): MangaSeries? {
+    private fun fetchBookSeries(seriesUrl: String): Pair<MangaSeries, List<Manga>>? {
         logger.info("Fetching series from $seriesUrl")
         val response = get(seriesUrl)
 
@@ -124,9 +131,9 @@ class YenPressScraper : AbstractScraper<MangaSeries>() {
         return MangaSeries(
             name = seriesName,
             publisher = name,
-            items = items,
+            items = items.map { it.isbn13 },
             publisherUrl = seriesUrl
-        )
+        ) to items
     }
 
     private fun fetchDetailForItem(itemUrl: String): Manga? {

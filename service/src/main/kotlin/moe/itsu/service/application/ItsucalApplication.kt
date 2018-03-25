@@ -6,6 +6,7 @@ import io.dropwizard.Application
 import io.dropwizard.setup.Bootstrap
 import io.dropwizard.setup.Environment
 import moe.itsu.service.resources.HealthCheckResource
+import moe.itsu.service.resources.MangaResource
 import moe.itsu.service.resources.MangaSeriesResource
 import moe.itsu.service.tasks.ScraperTask
 
@@ -20,6 +21,7 @@ class ItsucalApplication : Application<ItsucalApplicationConfiguration>() {
         environment: Environment
     ) {
         environment.jersey().register(MangaSeriesResource())
+        environment.jersey().register(MangaResource())
 
         environment.admin().addTask(ScraperTask)
 

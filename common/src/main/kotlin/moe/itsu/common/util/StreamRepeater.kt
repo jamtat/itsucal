@@ -1,13 +1,13 @@
 package moe.itsu.common.util
 
-typealias StreamRepeaterHandler<T> = (T) -> Any
+typealias StreamRepeaterHandler<T> = (T) -> T
 
-class StreamRepeater<T> : StreamRepeaterHandler<T> {
+class StreamRepeater : StreamRepeaterHandler<Any> {
 
-    private val listeners = ArrayList<StreamRepeaterHandler<T>>()
+    private val listeners = ArrayList<StreamRepeaterHandler<Any>>()
 
-    override operator fun invoke(x: T) = listeners.forEach { it(x) }
+    override operator fun invoke(x: Any) =  listeners.forEach { it(x) }
 
-    fun add(fn: StreamRepeaterHandler<T>) = listeners.add(fn)
-    fun remove(fn: StreamRepeaterHandler<T>) = listeners.remove(fn)
+    fun add(fn: StreamRepeaterHandler<Any>) = listeners.add(fn)
+    fun remove(fn: StreamRepeaterHandler<Any>) = listeners.remove(fn)
 }
