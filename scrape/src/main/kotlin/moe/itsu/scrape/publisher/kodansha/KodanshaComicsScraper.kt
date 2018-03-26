@@ -118,8 +118,8 @@ class KodanshaComicsScraper : AbstractMultiScraper() {
 
         var format = MangaFormat.PRINT
 
-        if(isbn != null && !isbn.valid) {
-            isbn = document.selectFirst("li.logo--nook")
+        if(isbn == null || !isbn.valid) {
+            isbn = document.selectFirst("li.logo--nook a")
                 ?.attr("href")
                 ?.split("ean=")?.last()
                 ?.let { ISBN13(it) }
@@ -127,7 +127,7 @@ class KodanshaComicsScraper : AbstractMultiScraper() {
             format = MangaFormat.DIGITAL
         }
 
-        if (isbn == null) {
+        if (isbn == null || !isbn.valid) {
             logger.warning("Could not parse ISBN from $itemUrl")
             return null
         }
