@@ -9,6 +9,7 @@ import moe.itsu.scrape.api.AbstractMultiScraper
 import moe.itsu.scrape.api.ScraperException
 import moe.itsu.scrape.util.http.get
 import org.jsoup.Jsoup
+import org.jsoup.nodes.Element
 import java.time.LocalDate
 import java.util.stream.Collectors
 
@@ -93,41 +94,10 @@ class SevenSeasScraper : AbstractMultiScraper() {
             else -> listOf(originalTitle)
         }
 
+        val authors = document.select("#series-meta a[href*='/creator/']").map { it.text().trim() }
+
         val items: List<Manga> = document.select(".series-volume")
-            .parallelStream()
-            .map(fun(element): Manga? {
-                val txt = element.text()
-
-                try {
-                    val dateMatch = Regex("""\d{4}/\d{2}/\d{2}""").find(txt)?.value
-
-                    if(dateMatch != null) {
-                        val (year, month, day) = dateMatch.split("/").map { it.toInt() }
-                        val isbn = txt.split("ISBN:").last().trim()
-                        val authors = document.select("#series-meta a[href*='/creator/']").map { it.text().trim() }
-
-                        return Manga(
-                            name = element.selectFirst("h3").text().trim(),
-                            releaseDate = LocalDate.of(year, month, day),
-                            publisherUrl = element.selectFirst("a").attr("href"),
-                            isbn13 = ISBN13(isbn),
-                            format = MangaFormat.PRINT,
-                            authors = authors
-                        )
-                    } else {
-                        logger.warning("Could not parse date from $seriesUrl ($txt)")
-                        return null
-                    }
-
-                } catch (e: NumberFormatException) {
-                    logger.warning("Could not parse date from $seriesUrl ($txt)")
-                    return null
-                } catch (e: NoSuchElementException) {
-                    logger.warning("Could not parse ISBN from $seriesUrl ($txt)")
-                    return null
-                }
-            }).collect(Collectors.toList())
-            .filterNotNull()
+            .mapNotNull { e -> parseMangaFromElement(e, authors, seriesUrl) }
 
         logger.info("Fetched series \"$seriesName\" from $seriesUrl, found ${items.size} items")
 
@@ -138,5 +108,42 @@ class SevenSeasScraper : AbstractMultiScraper() {
             publisherUrl = seriesUrl,
             otherNames = otherNames
         ) to items
+    }
+
+    private fun parseMangaFromElement(element: Element, authors: List<String>, seriesUrl: String): Manga? {
+        val txt = element.text()
+
+        try {
+            val dateMatch = Regex("""\d{4}/\d{2}/\d{2}""").find(txt)?.value
+
+            if(dateMatch != null) {
+                val (year, month, day) = dateMatch.split("/").map { it.toInt() }
+                val isbnText = txt.split("ISBN:").last().trim()
+                val isbn = ISBN13(isbnText)
+
+                if(!isbn.valid) {
+                    return null
+                }
+
+                return Manga(
+                    name = element.selectFirst("h3").text().trim(),
+                    releaseDate = LocalDate.of(year, month, day),
+                    publisherUrl = element.selectFirst("a").attr("href"),
+                    isbn13 = isbn,
+                    format = MangaFormat.PRINT,
+                    authors = authors
+                )
+            } else {
+                logger.warning("Could not parse date from $seriesUrl ($txt)")
+                return null
+            }
+
+        } catch (e: NumberFormatException) {
+            logger.warning("Could not parse date from $seriesUrl ($txt)")
+            return null
+        } catch (e: NoSuchElementException) {
+            logger.warning("Could not parse ISBN from $seriesUrl ($txt)")
+            return null
+        }
     }
 }
