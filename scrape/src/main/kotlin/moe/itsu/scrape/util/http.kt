@@ -7,10 +7,12 @@ import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import moe.itsu.common.util.RedisSettingsProvider
 import java.io.File
 import java.util.*
+import java.util.logging.Logger
 import kotlin.collections.HashMap
 
 object http {
 
+    var logger: Logger = Logger.getLogger(this.javaClass.name)
     val om = ObjectMapper()
         .enable(SerializationFeature.INDENT_OUTPUT)
         .registerKotlinModule()
@@ -21,7 +23,12 @@ object http {
         val url: String
     )
 
-    var cacheMap = HashMap<String, String>()
+    data class HTTPCacheEntry(
+        val uuid: String,
+        val timestamp: Long = Long.MIN_VALUE
+    )
+
+    var cacheMap = HashMap<String, HTTPCacheEntry>()
 
     private val CACHE_FOLDER = System.getProperty("user.home") + "/.itsucal/scrape/httpcache/"
     private val INDEX_FILE = CACHE_FOLDER + "_cache-db.json"
@@ -32,26 +39,44 @@ object http {
         File(CACHE_FOLDER).mkdirs()
         val indexfile = File(INDEX_FILE)
         if(indexfile.exists()) {
-            cacheMap = om.readValue(indexfile.readText())
+            val txt = indexfile.readText()
+            try {
+                cacheMap = om.readValue(txt)
+            } catch (err: Exception) {
+                logger.warning("Couldn't read http cache index file")
+                File(INDEX_FILE + ".broken").writeText(txt)
+                cacheMap = HashMap()
+            }
         } else {
             writeCacheFile()
         }
     }
 
-    fun get(url: String, params: Map<String, String> = mapOf(), cache: Boolean = CACHE_ENABLED): Response =
+    fun get(
+        url: String,
+        params: Map<String, String> = mapOf(),
+        cache: Boolean = CACHE_ENABLED,
+        maxAge: Long = Long.MAX_VALUE
+    ): Response =
         if (cache)
-            cachedGet(url, params)
+            cachedGet(url, params, maxAge)
         else
             uncachedGet(url, params)
 
-    private fun cachedGet(url: String, params: Map<String, String> = mapOf()): Response {
+    private fun cachedGet(
+        url: String,
+        params: Map<String, String> = mapOf(),
+        maxAge: Long = Long.MAX_VALUE
+    ): Response {
         val requestId = om.writeValueAsString(object {
             val url = url
             val params = params
         })
 
-        val cachedResponse: Response? = cacheMap[requestId]?.let { uuid ->
-            getCachedResponse(uuid)
+        val now = System.currentTimeMillis()
+        val cachedResponse: Response? = cacheMap[requestId]?.let { entry ->
+            if(entry.timestamp > now - maxAge) getCachedResponse(entry.uuid)
+            else null
         }
 
         if(cachedResponse != null) {
@@ -76,7 +101,7 @@ object http {
     @Synchronized
     private fun putCachedResponse(requestId: String, uuid: String, response: Response) {
         File("$CACHE_FOLDER$uuid.json").writeText(om.writeValueAsString(response))
-        cacheMap[requestId] = uuid
+        cacheMap[requestId] = HTTPCacheEntry(uuid, System.currentTimeMillis())
         writeCacheFile()
     }
 
