@@ -17,7 +17,8 @@ class BookDepositoryPurchaseInformationProvider : AbstractPurchaseInformationPro
         )
         val response = get(
             url = "https://www.bookdepository.com/search",
-            params = urlParams
+            params = urlParams,
+            maxAge = 6 * 60 * 60 * 1000 // 6 hour cache time
         )
 
         if(response.statusCode != 200) {
