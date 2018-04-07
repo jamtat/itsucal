@@ -45,8 +45,7 @@ class SevenSeasScraper : AbstractMultiScraper() {
                 val seriesName: String = element.selectFirst("strong").text()
                 val publisherUrl: String = element.selectFirst("td > a").attr("href")
 
-                if (!seriesName.toLowerCase().contains("light novel"))
-                    urlList.add(publisherUrl)
+                urlList.add(publisherUrl)
             }
         }
 
