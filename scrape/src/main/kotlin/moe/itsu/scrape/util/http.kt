@@ -28,7 +28,7 @@ object http {
         val timestamp: Long = Long.MIN_VALUE
     )
 
-    var cacheMap = HashMap<String, HTTPCacheEntry>()
+    private var cacheMap = HashMap<String, HTTPCacheEntry>()
 
     private val CACHE_FOLDER = System.getProperty("user.home") + "/.itsucal/scrape/httpcache/"
     private val INDEX_FILE = CACHE_FOLDER + "_cache-db.json"
@@ -38,14 +38,14 @@ object http {
     init {
         File(CACHE_FOLDER).mkdirs()
         val indexfile = File(INDEX_FILE)
-        if(indexfile.exists()) {
+        if (indexfile.exists()) {
             val txt = indexfile.readText()
-            try {
-                cacheMap = om.readValue(txt)
+            cacheMap = try {
+                om.readValue(txt)
             } catch (err: Exception) {
                 logger.warning("Couldn't read http cache index file")
-                File(INDEX_FILE + ".broken").writeText(txt)
-                cacheMap = HashMap()
+                File("$INDEX_FILE.broken").writeText(txt)
+                HashMap()
             }
         } else {
             writeCacheFile()
@@ -63,23 +63,28 @@ object http {
         else
             uncachedGet(url, params)
 
+    data class RequestId(
+        val url: String,
+        val params: Map<String, String>
+    )
+
     private fun cachedGet(
         url: String,
         params: Map<String, String> = mapOf(),
         maxAge: Long = Long.MAX_VALUE
     ): Response {
-        val requestId = om.writeValueAsString(object {
-            val url = url
-            val params = params
-        })
+        val requestId = om.writeValueAsString(RequestId(
+            url = url,
+            params = params
+        ))
 
         val now = System.currentTimeMillis()
         val cachedResponse: Response? = cacheMap[requestId]?.let { entry ->
-            if(entry.timestamp > now - maxAge) getCachedResponse(entry.uuid)
+            if (entry.timestamp > now - maxAge) getCachedResponse(entry.uuid)
             else null
         }
 
-        if(cachedResponse != null) {
+        if (cachedResponse != null) {
             return cachedResponse
         }
 

@@ -15,7 +15,9 @@ import java.util.stream.Collectors
 
 class VerticalComicsScraper : AbstractMultiScraper() {
 
-    private val SERIES_LIST_URL = "http://vertical-comics.com/books.php"
+    companion object {
+        private const val SERIES_LIST_URL = "http://vertical-comics.com/books.php"
+    }
 
     override val name = "verticalcomics"
 
@@ -106,9 +108,7 @@ class VerticalComicsScraper : AbstractMultiScraper() {
         val document = Jsoup.parse(response.text)
 
         val aboutPanel = document.selectFirst(".floatRight > .columnHeader")?.parent()
-
-        if(aboutPanel == null)
-            return null
+            ?: return null
 
         val aboutPanelLines = aboutPanel.wholeText().lines()
 
@@ -116,9 +116,7 @@ class VerticalComicsScraper : AbstractMultiScraper() {
             ?.split("ISBN:")?.last()
             ?.trim()
             ?.let { ISBN13(it) }
-
-        if(isbn == null)
-            return null
+            ?: return null
 
         val pages = aboutPanelLines.find { it.contains("Pages:") }
             ?.split("|")?.first()
@@ -129,13 +127,11 @@ class VerticalComicsScraper : AbstractMultiScraper() {
         val releaseDateString = aboutPanelLines.find { it.contains("On Sale:") }
             ?.split("On Sale:")?.last()
             ?.trim()
-
-        if(releaseDateString == null)
-            return null
+            ?: return null
 
         val month = findMonth(releaseDateString.split(" ")[0])
         val day = releaseDateString.split(",")[0].split(" ")[1].toInt()
-        var year = releaseDateString.split(" ").last().toInt()
+        val year = releaseDateString.split(" ").last().toInt()
 
 
         val releaseDate: LocalDate

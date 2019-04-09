@@ -15,8 +15,10 @@ import java.util.stream.Collectors
 
 class YenPressScraper : AbstractMultiScraper() {
 
-    private val SERIES_LIST_URL = "http://yenpress.com/books/"
-    private val TITLE_BASE_URL = "http://b2c.hachettebookgroup.com"
+    companion object {
+        private const val SERIES_LIST_URL = "http://yenpress.com/books/"
+        private const val TITLE_BASE_URL = "http://b2c.hachettebookgroup.com"
+    }
 
     override val name = "yenpress"
 

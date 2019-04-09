@@ -15,7 +15,9 @@ import java.util.stream.Collectors
 
 class SevenSeasScraper : AbstractMultiScraper() {
 
-    private val SERIES_LIST_URL = "http://www.sevenseasentertainment.com/series-list/"
+    companion object {
+        private const val SERIES_LIST_URL = "http://www.sevenseasentertainment.com/series-list/"
+    }
 
     override val name = "sevenseas"
 

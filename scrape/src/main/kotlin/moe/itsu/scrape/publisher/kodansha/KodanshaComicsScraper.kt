@@ -16,7 +16,9 @@ import java.util.stream.Collectors
 
 class KodanshaComicsScraper : AbstractMultiScraper() {
 
-    private val SERIES_LIST_URL = "https://kodanshacomics.com/series/"
+    companion object {
+        private const val SERIES_LIST_URL = "https://kodanshacomics.com/series/"
+    }
 
     override val name = "kodansha"
 
@@ -26,7 +28,7 @@ class KodanshaComicsScraper : AbstractMultiScraper() {
         fetchBookSeries(consumer)
     }
 
-    override fun updateEntity(entity: Entity): Entity? = when(entity){
+    override fun updateEntity(entity: Entity): Entity? = when (entity) {
         is MangaSeries -> fetchBookSeries(entity.publisherUrl)?.first
         else -> null
     }
@@ -51,21 +53,21 @@ class KodanshaComicsScraper : AbstractMultiScraper() {
         logger.info("Fetching all series from $SERIES_LIST_URL")
         val response = get(SERIES_LIST_URL, cache = false)
 
-        if(response.statusCode != 200) {
+        if (response.statusCode != 200) {
             throw ScraperException("Could not fetch series from $SERIES_LIST_URL")
         }
 
         val document = Jsoup.parse(response.text)
 
         return document.select("div.volume > div > a")
-            .mapNotNull {it.attr("href")}
+            .mapNotNull { it.attr("href") }
     }
 
     private fun fetchBookSeries(seriesUrl: String): Pair<MangaSeries, List<Manga>>? {
         logger.info("Fetching series from $seriesUrl")
         val response = get(seriesUrl)
 
-        if(response.statusCode != 200) {
+        if (response.statusCode != 200) {
             logger.warning("Could not fetch series from $seriesUrl")
             return null
         }
@@ -99,7 +101,7 @@ class KodanshaComicsScraper : AbstractMultiScraper() {
         logger.info("Fetching item from $itemUrl")
         val response = get(itemUrl)
 
-        if(response.statusCode != 200) {
+        if (response.statusCode != 200) {
             logger.warning("Could not fetch series from $itemUrl")
             return null
         }
@@ -118,7 +120,7 @@ class KodanshaComicsScraper : AbstractMultiScraper() {
 
         var format = MangaFormat.PRINT
 
-        if(isbn == null || !isbn.valid) {
+        if (isbn == null || !isbn.valid) {
             isbn = document.selectFirst("li.logo--nook a")
                 ?.attr("href")
                 ?.split("ean=")?.last()
@@ -142,11 +144,11 @@ class KodanshaComicsScraper : AbstractMultiScraper() {
         val releaseDateList = container.selectFirst("span.volume__meta__date_published")
             ?.text()
             ?.split(" ")
-        val month = releaseDateList?.get(0)?.let { findMonth( it ) }
+        val month = releaseDateList?.get(0)?.let { findMonth(it) }
         val day = releaseDateList?.get(1)?.toInt()
         val year = releaseDateList?.get(2)?.toInt()
 
-        if(month == null || day == null || year == null) {
+        if (month == null || day == null || year == null) {
             logger.warning("Error parsing date from '$releaseDateList' found on ${itemUrl}")
             return null
         }
