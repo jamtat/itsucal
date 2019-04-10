@@ -26,18 +26,17 @@ object ScraperTask : Task("scrape") {
         private val mangaDB: RedisEntityDB<Manga> = RedisEntityDB(Manga::class).connect()
 
         private val manager: ScraperManager<Entity> = ScraperManager(
-            Entity::class,
-            {item -> when(item) {
-                is MangaSeries -> mangaSeriesDB.add(item)
-                is Manga -> mangaDB.add(item)
-            }}
-        )
+            Entity::class
+        ) { item -> when(item) {
+            is MangaSeries -> mangaSeriesDB.add(item)
+            is Manga -> mangaDB.add(item)
+        }}
 
         private val scraperMap: Map<String, KClass<out Scraper<Entity>>> = scrapers
             .groupBy { it.java.newInstance().name }
             .mapValues { it.value.first() }
 
-        val scraperKeys: List<String>
+        private val scraperKeys: List<String>
             get() = scraperMap.keys.toList()
 
         fun scrapeAll(output: PrintWriter) {

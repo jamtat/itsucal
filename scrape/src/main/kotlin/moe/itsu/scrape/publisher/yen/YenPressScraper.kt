@@ -17,7 +17,7 @@ class YenPressScraper : AbstractMultiScraper() {
 
     companion object {
         private const val SERIES_LIST_URL = "http://yenpress.com/books/"
-        private const val TITLE_BASE_URL = "http://b2c.hachettebookgroup.com"
+        private const val TITLE_BASE_URL = "http://yenpress.com"
     }
 
     override val name = "yenpress"
@@ -100,7 +100,7 @@ class YenPressScraper : AbstractMultiScraper() {
 
         val document = Jsoup.parse(response.text)
 
-        val seriesNameElement: Element? = document.selectFirst("#search-results header")
+        val seriesNameElement: Element? = document.selectFirst(".hentry header")
 
         if (seriesNameElement == null) {
             logger.warning("Could not get series name for $seriesUrl, may be a one off and not a series")
